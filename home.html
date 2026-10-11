@@ -1,0 +1,173 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Academic Overview — LearnZone Ultra</title>
+  <link rel="stylesheet" href="styles.css" />
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css" />
+  <script>
+    (function(){
+      var t = localStorage.getItem('lzu_theme') || localStorage.getItem('lz_theme');
+      var dark = window.matchMedia && window.matchMedia('(prefers-color-scheme:dark)').matches;
+      if (t === 'dark' || (!t && dark)) document.documentElement.classList.add('dark');
+    })();
+  </script>
+</head>
+<body>
+
+  <div class="ultra-shell">
+    <aside class="ultra-sidebar" id="appSidebar"></aside>
+    <div class="ultra-workspace">
+      <header class="ultra-topbar" id="appTopbar"></header>
+      <main class="ultra-content" id="homeMainContent"></main>
+    </div>
+  </div>
+
+  <div id="commandPaletteOverlay"></div>
+
+  <script src="utils.js"></script>
+  <script>
+    const session = requireAuth();
+    if (!session) throw new Error('Unauthenticated');
+
+    renderShell(session, 'home.html');
+
+    function renderHome() {
+      const assignments = DB.getAssignments(session.email);
+      const pending = assignments.filter(a => a.status === 'pending');
+      const submitted = assignments.filter(a => a.status === 'submitted');
+      const overdue = assignments.filter(a => a.status === 'overdue' || (a.status === 'pending' && daysFromToday(a.dueDate) < 0));
+      const queries = DB.getQueries().slice(0, 3);
+
+      const completionRate = assignments.length ? Math.round((submitted.length / assignments.length) * 100) : 0;
+
+      const hour = new Date().getHours();
+      const timeGreeting = hour < 12 ? 'Good morning' : hour < 17 ? 'Good afternoon' : 'Good evening';
+
+      const mainEl = document.getElementById('homeMainContent');
+      mainEl.innerHTML = `
+        <!-- Welcome Hero Banner -->
+        <div class="ultra-card animate-entrance stagger-1" style="padding:36px;margin-bottom:32px;background:linear-gradient(135deg, rgba(99,102,241,0.12) 0%, rgba(236,72,153,0.06) 100%);border-color:rgba(99,102,241,0.3);">
+          <div style="display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:20px;">
+            <div>
+              <span class="editorial-tag"><i class="fas fa-sparkles"></i> Semester Sprint 2026</span>
+              <h2 style="font-size:2.2rem;margin:12px 0 8px;">
+                ${timeGreeting}, <span class="text-gradient">${session.firstName}</span> 👋
+              </h2>
+              <p style="color:var(--color-text-secondary);font-size:1.05rem;">
+                You have <strong style="color:var(--color-primary);">${pending.length} pending milestone${pending.length === 1 ? '' : 's'}</strong> and 
+                <strong style="color:${overdue.length > 0 ? '#EF4444' : 'var(--color-text)'}">${overdue.length} overdue task${overdue.length === 1 ? '' : 's'}</strong> on your radar today.
+              </p>
+            </div>
+            <div style="display:flex;gap:12px;">
+              <a href="assignments.html" class="btn-ultra btn-ultra-primary btn-ultra-glow">
+                <i class="fas fa-tasks"></i> Review Work
+              </a>
+              <a href="queries.html" class="btn-ultra btn-ultra-secondary">
+                <i class="fas fa-plus"></i> Post Question
+              </a>
+            </div>
+          </div>
+        </div>
+
+        <!-- Academic Telemetry Grid -->
+        <div style="display:grid;grid-template-columns:repeat(auto-fit, minmax(240px, 1fr));gap:20px;margin-bottom:32px;">
+          <div class="metric-card-ultra animate-entrance stagger-2">
+            <div class="metric-header">
+              <span class="editorial-tag" style="font-size:0.7rem;padding:3px 8px;">Completion</span>
+              <div class="metric-icon-box" style="background:rgba(99,102,241,0.1);color:var(--color-primary);"><i class="fas fa-pie-chart"></i></div>
+            </div>
+            <div class="metric-value-huge">${completionRate}%</div>
+            <div class="metric-caption">${submitted.length} of ${assignments.length} deliverables closed</div>
+          </div>
+
+          <div class="metric-card-ultra animate-entrance stagger-3">
+            <div class="metric-header">
+              <span class="editorial-tag" style="font-size:0.7rem;padding:3px 8px;color:#F59E0B;border-color:rgba(245,158,11,0.2);">Pending</span>
+              <div class="metric-icon-box" style="background:rgba(245,158,11,0.1);color:#F59E0B;"><i class="fas fa-hourglass-half"></i></div>
+            </div>
+            <div class="metric-value-huge">${pending.length}</div>
+            <div class="metric-caption">Upcoming deadlines</div>
+          </div>
+
+          <div class="metric-card-ultra animate-entrance stagger-4">
+            <div class="metric-header">
+              <span class="editorial-tag" style="font-size:0.7rem;padding:3px 8px;color:${overdue.length > 0 ? '#EF4444' : '#10B981'};border-color:${overdue.length > 0 ? 'rgba(239,68,68,0.2)' : 'rgba(16,185,129,0.2)'};">Urgent Action</span>
+              <div class="metric-icon-box" style="background:${overdue.length > 0 ? 'rgba(239,68,68,0.1)' : 'rgba(16,185,129,0.1)'};color:${overdue.length > 0 ? '#EF4444' : '#10B981'};">
+                <i class="fas ${overdue.length > 0 ? 'fa-triangle-exclamation' : 'fa-check'}"></i>
+              </div>
+            </div>
+            <div class="metric-value-huge" style="color:${overdue.length > 0 ? '#EF4444' : 'var(--color-text)'}">${overdue.length}</div>
+            <div class="metric-caption">${overdue.length > 0 ? 'Require late submission' : 'All clear on backlogs'}</div>
+          </div>
+
+          <div class="metric-card-ultra animate-entrance stagger-5">
+            <div class="metric-header">
+              <span class="editorial-tag" style="font-size:0.7rem;padding:3px 8px;color:#10B981;border-color:rgba(16,185,129,0.2);">Mastery</span>
+              <div class="metric-icon-box" style="background:rgba(16,185,129,0.1);color:#10B981;"><i class="fas fa-award"></i></div>
+            </div>
+            <div class="metric-value-huge">3.92</div>
+            <div class="metric-caption">Cumulative GPA index</div>
+          </div>
+        </div>
+
+        <!-- Two Column Deep Workspace -->
+        <div style="display:grid;grid-template-columns:1.5fr 1fr;gap:28px;">
+          <!-- Left: Upcoming Assignment Queue -->
+          <div class="ultra-card">
+            <div class="ultra-card-header">
+              <div>
+                <h3 style="font-size:1.15rem;">Deliverables Pipeline</h3>
+                <p style="font-size:0.75rem;color:var(--color-text-secondary);margin-top:2px;">Immediate milestones requiring action</p>
+              </div>
+              <a href="assignments.html" class="btn-ultra btn-ultra-secondary" style="padding:6px 14px;font-size:0.8rem;">View All</a>
+            </div>
+            <div class="ultra-card-body" style="padding:16px;">
+              ${pending.length === 0 ? '<div style="text-align:center;padding:32px;color:var(--color-text-muted);">No pending coursework! Great job.</div>' :
+                pending.slice(0, 3).map(a => `
+                  <div style="display:flex;align-items:center;justify-content:space-between;padding:14px;border-radius:12px;margin-bottom:8px;background:var(--color-bg);border:1px solid var(--color-border);gap:12px;">
+                    <div style="min-width:0;">
+                      <div style="font-weight:700;font-size:0.95rem;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;">${sanitize(a.title)}</div>
+                      <div style="font-size:0.8rem;color:var(--color-text-secondary);margin-top:2px;">
+                        <span style="color:var(--color-primary);font-weight:600;">${sanitize(a.subject)}</span> • ${dueLabel(a.dueDate)}
+                      </div>
+                    </div>
+                    <a href="assignments.html" class="btn-ultra btn-ultra-secondary" style="padding:6px 12px;font-size:0.75rem;">Submit</a>
+                  </div>
+                `).join('')
+              }
+            </div>
+          </div>
+
+          <!-- Right: Peer Forum Stream -->
+          <div class="ultra-card">
+            <div class="ultra-card-header">
+              <div>
+                <h3 style="font-size:1.15rem;">Research Threads</h3>
+                <p style="font-size:0.75rem;color:var(--color-text-secondary);margin-top:2px;">Active student discussions</p>
+              </div>
+              <a href="queries.html" class="btn-ultra btn-ultra-secondary" style="padding:6px 14px;font-size:0.8rem;">Browse</a>
+            </div>
+            <div class="ultra-card-body" style="padding:16px;">
+              ${queries.map(q => `
+                <div style="padding:14px;border-radius:12px;margin-bottom:8px;background:var(--color-bg);border:1px solid var(--color-border);">
+                  <div style="font-weight:600;font-size:0.85rem;color:var(--color-text);margin-bottom:4px;display:-webkit-box;-webkit-line-clamp:2;-webkit-box-orient:vertical;overflow:hidden;">
+                    ${sanitize(q.title)}
+                  </div>
+                  <div style="display:flex;align-items:center;justify-content:space-between;font-size:0.75rem;color:var(--color-text-muted);margin-top:8px;">
+                    <span><i class="fas fa-user-circle"></i> ${sanitize(q.authorName)}</span>
+                    <span>${relativeTime(q.createdAt)}</span>
+                  </div>
+                </div>
+              `).join('')}
+            </div>
+          </div>
+        </div>
+      `;
+    }
+
+    renderHome();
+  </script>
+</body>
+</html>

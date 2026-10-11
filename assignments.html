@@ -1,0 +1,173 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Coursework Deliverables — LearnZone Ultra</title>
+  <link rel="stylesheet" href="styles.css" />
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css" />
+  <script>
+    (function(){
+      var t = localStorage.getItem('lzu_theme') || localStorage.getItem('lz_theme');
+      var dark = window.matchMedia && window.matchMedia('(prefers-color-scheme:dark)').matches;
+      if (t === 'dark' || (!t && dark)) document.documentElement.classList.add('dark');
+    })();
+  </script>
+</head>
+<body>
+
+  <div class="ultra-shell">
+    <aside class="ultra-sidebar" id="appSidebar"></aside>
+    <div class="ultra-workspace">
+      <header class="ultra-topbar" id="appTopbar"></header>
+      <main class="ultra-content" id="asgMainContent"></main>
+    </div>
+  </div>
+
+  <div id="commandPaletteOverlay"></div>
+
+  <script src="utils.js"></script>
+  <script>
+    const session = requireAuth();
+    if (!session) throw new Error('Unauthenticated');
+
+    renderShell(session, 'assignments.html');
+
+    let currentFilter = 'all';
+    let searchQuery = '';
+
+    function renderAssignments() {
+      const all = DB.getAssignments(session.email);
+      let list = all;
+
+      if (currentFilter !== 'all') {
+        if (currentFilter === 'overdue') {
+          list = list.filter(a => a.status === 'overdue' || (a.status === 'pending' && daysFromToday(a.dueDate) < 0));
+        } else {
+          list = list.filter(a => a.status === currentFilter);
+        }
+      }
+
+      if (searchQuery) {
+        const q = searchQuery.toLowerCase();
+        list = list.filter(a => a.title.toLowerCase().includes(q) || a.subject.toLowerCase().includes(q) || a.description.toLowerCase().includes(q));
+      }
+
+      const mainEl = document.getElementById('asgMainContent');
+      mainEl.innerHTML = `
+        <!-- Filter and Search Strip -->
+        <div class="ultra-card" style="padding:18px 24px;margin-bottom:28px;">
+          <div style="display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:16px;">
+            <div style="display:flex;gap:8px;flex-wrap:wrap;">
+              <button class="btn-ultra ${currentFilter === 'all' ? 'btn-ultra-primary' : 'btn-ultra-secondary'}" style="padding:8px 16px;font-size:0.85rem;" onclick="setFilter('all')">
+                All Deliverables (${all.length})
+              </button>
+              <button class="btn-ultra ${currentFilter === 'pending' ? 'btn-ultra-primary' : 'btn-ultra-secondary'}" style="padding:8px 16px;font-size:0.85rem;" onclick="setFilter('pending')">
+                Pending (${all.filter(a => a.status === 'pending').length})
+              </button>
+              <button class="btn-ultra ${currentFilter === 'submitted' ? 'btn-ultra-primary' : 'btn-ultra-secondary'}" style="padding:8px 16px;font-size:0.85rem;" onclick="setFilter('submitted')">
+                Submitted (${all.filter(a => a.status === 'submitted').length})
+              </button>
+              <button class="btn-ultra ${currentFilter === 'overdue' ? 'btn-ultra-primary' : 'btn-ultra-secondary'}" style="padding:8px 16px;font-size:0.85rem;" onclick="setFilter('overdue')">
+                Overdue (${all.filter(a => a.status === 'overdue' || (a.status === 'pending' && daysFromToday(a.dueDate) < 0)).length})
+              </button>
+            </div>
+
+            <div class="ultra-input-wrap" style="width:260px;">
+              <i class="fas fa-search prefix-icon"></i>
+              <input type="text" id="asgSearchInput" class="ultra-input has-prefix" placeholder="Filter deliverables..." value="${sanitize(searchQuery)}" />
+            </div>
+          </div>
+        </div>
+
+        <!-- Assignment Cards List -->
+        <div style="display:flex;flex-direction:column;gap:16px;">
+          ${list.length === 0 ? `
+            <div class="ultra-card" style="padding:48px;text-align:center;">
+              <i class="fas fa-tasks" style="font-size:2.5rem;color:var(--color-text-muted);margin-bottom:12px;"></i>
+              <h3 style="font-size:1.2rem;margin-bottom:4px;">No deliverables matched</h3>
+              <p style="color:var(--color-text-secondary);font-size:0.85rem;">Try resetting your filters or search query.</p>
+            </div>
+          ` : list.map(a => {
+            const isSubmitted = a.status === 'submitted';
+            const isOverdue = a.status === 'overdue' || (a.status === 'pending' && daysFromToday(a.dueDate) < 0);
+            const statusColor = isSubmitted ? '#10B981' : isOverdue ? '#EF4444' : '#F59E0B';
+            return `
+              <div class="ultra-card" style="padding:24px;border-left:4px solid ${statusColor};">
+                <div style="display:flex;align-items:flex-start;justify-content:space-between;gap:16px;flex-wrap:wrap;">
+                  <div style="flex:1;min-width:280px;">
+                    <div style="display:flex;align-items:center;gap:10px;margin-bottom:8px;">
+                      <span class="editorial-tag" style="font-size:0.7rem;padding:3px 8px;">${sanitize(a.subject)}</span>
+                      <span style="font-size:0.75rem;font-weight:700;color:${statusColor};text-transform:uppercase;">
+                        <i class="fas ${isSubmitted ? 'fa-check' : isOverdue ? 'fa-triangle-exclamation' : 'fa-clock'}"></i>
+                        ${isSubmitted ? 'Submitted' : isOverdue ? 'Overdue' : 'Action Required'}
+                      </span>
+                    </div>
+                    <h3 style="font-size:1.15rem;font-weight:700;margin-bottom:6px;">${sanitize(a.title)}</h3>
+                    <p style="color:var(--color-text-secondary);font-size:0.88rem;line-height:1.5;">${sanitize(a.description)}</p>
+                    <div style="display:flex;align-items:center;gap:16px;margin-top:14px;font-size:0.8rem;color:var(--color-text-muted);">
+                      <span><i class="fas fa-calendar"></i> Deadline: <strong>${formatDate(a.dueDate)}</strong></span>
+                      <span style="color:${isOverdue ? '#EF4444' : 'inherit'};"><strong>${dueLabel(a.dueDate)}</strong></span>
+                    </div>
+                  </div>
+
+                  <div style="display:flex;align-items:center;gap:10px;">
+                    ${isSubmitted ? `
+                      <button class="btn-ultra btn-ultra-secondary" disabled style="opacity:0.75;cursor:default;">
+                        <i class="fas fa-check-circle" style="color:#10B981;"></i> Submitted
+                      </button>
+                    ` : `
+                      <button class="btn-ultra ${isOverdue ? 'btn-ultra-primary' : 'btn-ultra-primary btn-ultra-glow'}" style="${isOverdue ? 'background:#EF4444;' : ''}" onclick="handleSubmitAssignment('${a.id}')">
+                        <i class="fas fa-upload"></i> ${isOverdue ? 'Submit Late' : 'Submit Work'}
+                      </button>
+                    `}
+                  </div>
+                </div>
+              </div>
+            `;
+          }).join('')}
+        </div>
+      `;
+
+      // Rebind search input
+      const searchInput = document.getElementById('asgSearchInput');
+      if (searchInput) {
+        searchInput.addEventListener('input', (e) => {
+          searchQuery = e.target.value;
+          renderAssignments();
+          const next = document.getElementById('asgSearchInput');
+          if (next) {
+            next.focus();
+            next.setSelectionRange(next.value.length, next.value.length);
+          }
+        });
+      }
+    }
+
+    function setFilter(f) {
+      currentFilter = f;
+      renderAssignments();
+    }
+
+    async function handleSubmitAssignment(id) {
+      const all = DB.getAssignments(session.email);
+      const asg = all.find(a => a.id === id);
+      if (!asg) return;
+
+      const ok = await confirmModal({
+        title: 'Verify Deliverable Submission',
+        body: `Ready to submit "${asg.title}" for instructor review? This will commit your local student deliverable timestamp.`,
+        confirmText: 'Submit Deliverable'
+      });
+
+      if (ok) {
+        DB.submitAssignment(session.email, id);
+        Toast.success('Deliverable Recorded', `"${asg.title}" marked as submitted.`);
+        renderAssignments();
+      }
+    }
+
+    renderAssignments();
+  </script>
+</body>
+</html>

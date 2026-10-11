@@ -1,0 +1,201 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Student Sign In — LearnZone Ultra</title>
+  <link rel="stylesheet" href="styles.css" />
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css" />
+  <script>
+    (function(){
+      var t = localStorage.getItem('lzu_theme') || localStorage.getItem('lz_theme');
+      var dark = window.matchMedia && window.matchMedia('(prefers-color-scheme:dark)').matches;
+      if (t === 'dark' || (!t && dark)) document.documentElement.classList.add('dark');
+    })();
+  </script>
+  <style>
+    .auth-canvas {
+      min-height: 100vh;
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+    }
+    .auth-editorial-panel {
+      background: linear-gradient(135deg, #0F172A 0%, #1E1B4B 50%, #311042 100%);
+      color: #FFFFFF;
+      padding: 64px;
+      display: flex;
+      flex-direction: column;
+      justify-content: space-between;
+      position: relative;
+      overflow: hidden;
+    }
+    .auth-editorial-panel::before {
+      content: '';
+      position: absolute;
+      width: 450px;
+      height: 450px;
+      border-radius: 50%;
+      background: radial-gradient(circle, rgba(99, 102, 241, 0.3) 0%, transparent 70%);
+      top: -100px;
+      right: -100px;
+      filter: blur(50px);
+    }
+    .auth-form-panel {
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      padding: 48px 32px;
+      background: var(--color-bg);
+    }
+    .auth-card-ultra {
+      width: 100%;
+      max-width: 440px;
+      padding: 40px;
+      background: var(--color-surface);
+      border: 1px solid var(--color-border);
+      border-radius: var(--radius-xl);
+      box-shadow: var(--shadow-elevated);
+    }
+    @media (max-width: 900px) {
+      .auth-canvas { grid-template-columns: 1fr; }
+      .auth-editorial-panel { display: none; }
+    }
+  </style>
+</head>
+<body>
+
+  <div class="auth-canvas">
+    <!-- Editorial Branding Left Panel -->
+    <div class="auth-editorial-panel">
+      <div>
+        <a href="index.html" class="ultra-brand" style="margin-bottom:32px;">
+          <div class="brand-icon-wrap">
+            <i class="fas fa-cube" style="color:#FFF;"></i>
+          </div>
+          <div>
+            <span class="brand-text">LearnZone</span>
+            <span class="brand-badge">ULTRA</span>
+          </div>
+        </a>
+      </div>
+
+      <div style="max-width:440px;position:relative;z-index:2;">
+        <span class="editorial-tag" style="background:rgba(255,255,255,0.1);color:#A5B4FC;border-color:rgba(255,255,255,0.2);">
+          Verified Academic Access
+        </span>
+        <h2 style="font-size:2.5rem;color:#FFF;margin:20px 0 16px;line-height:1.15;">
+          Your digital campus awaits.
+        </h2>
+        <p style="color:#94A3B8;font-size:1.05rem;line-height:1.6;">
+          Authenticate to sync assignment deadlines, inspect assessment telemetry, and join live engineering query forums.
+        </p>
+      </div>
+
+      <div style="font-size:0.8rem;color:#64748B;">
+        © 2026 LearnZone Ultra • High-Performance Academic Architecture
+      </div>
+    </div>
+
+    <!-- Interactive Sign-In Form Panel -->
+    <div class="auth-form-panel">
+      <div class="auth-card-ultra animate-entrance">
+        <div style="margin-bottom:28px;">
+          <h2 style="font-size:1.8rem;margin-bottom:6px;">Sign in</h2>
+          <p style="color:var(--color-text-secondary);font-size:0.9rem;">Enter your student email and password to proceed.</p>
+        </div>
+
+        <form id="ultraLoginForm" novalidate>
+          <div class="ultra-form-group">
+            <label class="ultra-label" for="loginEmail">Email address</label>
+            <div class="ultra-input-wrap">
+              <i class="fas fa-envelope prefix-icon"></i>
+              <input type="email" id="loginEmail" class="ultra-input has-prefix" placeholder="student@university.edu" required autocomplete="email" />
+            </div>
+            <div id="emailErr" style="color:#EF4444;font-size:0.75rem;margin-top:6px;"></div>
+          </div>
+
+          <div class="ultra-form-group">
+            <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:8px;">
+              <label class="ultra-label" for="loginPassword" style="margin-bottom:0;">Password</label>
+              <a href="forgot-password.html" style="font-size:0.8rem;color:var(--color-primary);font-weight:600;">Forgot key?</a>
+            </div>
+            <div class="ultra-input-wrap">
+              <i class="fas fa-lock prefix-icon"></i>
+              <input type="password" id="loginPassword" class="ultra-input has-prefix" placeholder="••••••••" required autocomplete="current-password" />
+              <button type="button" id="pwdToggleBtn" style="position:absolute;right:14px;top:50%;transform:translateY(-50%);background:none;border:none;color:var(--color-text-muted);cursor:pointer;" aria-label="Toggle password view">
+                <i class="fas fa-eye"></i>
+              </button>
+            </div>
+            <div id="pwdErr" style="color:#EF4444;font-size:0.75rem;margin-top:6px;"></div>
+          </div>
+
+          <button type="submit" id="submitLoginBtn" class="btn-ultra btn-ultra-primary btn-ultra-glow" style="width:100%;padding:14px;margin-top:8px;">
+            <i class="fas fa-arrow-right-to-bracket"></i>
+            <span>Access Workspace</span>
+          </button>
+        </form>
+
+        <div style="margin-top:24px;text-align:center;font-size:0.85rem;color:var(--color-text-secondary);">
+          Don't have an enrolled profile?
+          <a href="register.html" style="color:var(--color-primary);font-weight:600;margin-left:4px;">Register account</a>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <script src="utils.js"></script>
+  <script>
+    redirectIfAuthed();
+
+    const form = document.getElementById('ultraLoginForm');
+    const emailInput = document.getElementById('loginEmail');
+    const pwdInput = document.getElementById('loginPassword');
+    const pwdToggle = document.getElementById('pwdToggleBtn');
+
+    pwdToggle.addEventListener('click', () => {
+      const isPwd = pwdInput.type === 'password';
+      pwdInput.type = isPwd ? 'text' : 'password';
+      pwdToggle.querySelector('i').className = `fas ${isPwd ? 'fa-eye-slash' : 'fa-eye'}`;
+    });
+
+    form.addEventListener('submit', async (e) => {
+      e.preventDefault();
+      document.getElementById('emailErr').textContent = '';
+      document.getElementById('pwdErr').textContent = '';
+
+      const email = emailInput.value.trim();
+      const pwd = pwdInput.value;
+      let valid = true;
+
+      if (!email || !isValidEmail(email)) {
+        document.getElementById('emailErr').textContent = 'Please enter a valid academic email address.';
+        valid = false;
+      }
+      if (!pwd) {
+        document.getElementById('pwdErr').textContent = 'Password is required.';
+        valid = false;
+      }
+      if (!valid) return;
+
+      const btn = document.getElementById('submitLoginBtn');
+      btn.disabled = true;
+      btn.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Authenticating...';
+
+      await new Promise(r => setTimeout(r, 400));
+      const result = DB.loginUser(email, pwd);
+
+      if (!result.ok) {
+        btn.disabled = false;
+        btn.innerHTML = '<i class="fas fa-arrow-right-to-bracket"></i> <span>Access Workspace</span>';
+        document.getElementById('emailErr').textContent = result.msg;
+        Toast.error('Authentication Error', result.msg);
+        return;
+      }
+
+      DB.setSession(result.user);
+      Toast.success('Session Initialized', `Welcome back, ${result.user.firstName}!`);
+      setTimeout(() => { window.location.href = 'home.html'; }, 300);
+    });
+  </script>
+</body>
+</html>

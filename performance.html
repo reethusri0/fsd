@@ -1,0 +1,188 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Academic Analytics — LearnZone Ultra</title>
+  <link rel="stylesheet" href="styles.css" />
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css" />
+  <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js"></script>
+  <script>
+    (function(){
+      var t = localStorage.getItem('lzu_theme') || localStorage.getItem('lz_theme');
+      var dark = window.matchMedia && window.matchMedia('(prefers-color-scheme:dark)').matches;
+      if (t === 'dark' || (!t && dark)) document.documentElement.classList.add('dark');
+    })();
+  </script>
+</head>
+<body>
+
+  <div class="ultra-shell">
+    <aside class="ultra-sidebar" id="appSidebar"></aside>
+    <div class="ultra-workspace">
+      <header class="ultra-topbar" id="appTopbar"></header>
+      <main class="ultra-content" id="perfMainContent"></main>
+    </div>
+  </div>
+
+  <div id="commandPaletteOverlay"></div>
+
+  <script src="utils.js"></script>
+  <script>
+    const session = requireAuth();
+    if (!session) throw new Error('Unauthenticated');
+
+    renderShell(session, 'performance.html');
+
+    function renderPerformance() {
+      const tests = [
+        { title: 'Neural Systems Architecture Midterm', score: 96, grade: 'A+', date: 'Oct 04, 2026' },
+        { title: 'Distributed Raft Consensus Benchmark', score: 92, grade: 'A', date: 'Sep 27, 2026' },
+        { title: 'PostgreSQL Query Planner Optimization', score: 88, grade: 'A-', date: 'Sep 19, 2026' },
+        { title: 'GraphQL Real-Time Subscriptions Test', score: 94, grade: 'A', date: 'Sep 11, 2026' }
+      ];
+
+      const mainEl = document.getElementById('perfMainContent');
+      mainEl.innerHTML = `
+        <!-- Demo Banner -->
+        <div style="background:rgba(99,102,241,0.08);border:1px solid rgba(99,102,241,0.2);border-radius:12px;padding:12px 18px;margin-bottom:28px;display:flex;align-items:center;gap:12px;font-size:0.85rem;">
+          <i class="fas fa-info-circle" style="color:var(--color-primary);font-size:1.1rem;"></i>
+          <span>Academic performance metrics derived from simulated course gradebooks and laboratory benchmarks.</span>
+        </div>
+
+        <!-- Metric Grid -->
+        <div style="display:grid;grid-template-columns:repeat(auto-fit, minmax(240px, 1fr));gap:20px;margin-bottom:28px;">
+          <div class="metric-card-ultra animate-entrance stagger-1">
+            <div class="metric-header">
+              <span class="editorial-tag" style="font-size:0.7rem;padding:3px 8px;">Grade Average</span>
+              <div class="metric-icon-box" style="background:rgba(16,185,129,0.1);color:#10B981;"><i class="fas fa-percent"></i></div>
+            </div>
+            <div class="metric-value-huge" style="color:#10B981;">92.5%</div>
+            <div class="metric-caption">A Grade Equivalency</div>
+          </div>
+
+          <div class="metric-card-ultra animate-entrance stagger-2">
+            <div class="metric-header">
+              <span class="editorial-tag" style="font-size:0.7rem;padding:3px 8px;">Laboratory Index</span>
+              <div class="metric-icon-box" style="background:rgba(99,102,241,0.1);color:var(--color-primary);"><i class="fas fa-flask"></i></div>
+            </div>
+            <div class="metric-value-huge">38 / 40</div>
+            <div class="metric-caption">Practicals verified</div>
+          </div>
+
+          <div class="metric-card-ultra animate-entrance stagger-3">
+            <div class="metric-header">
+              <span class="editorial-tag" style="font-size:0.7rem;padding:3px 8px;color:#F59E0B;border-color:rgba(245,158,11,0.2);">Attendance</span>
+              <div class="metric-icon-box" style="background:rgba(245,158,11,0.1);color:#F59E0B;"><i class="fas fa-user-check"></i></div>
+            </div>
+            <div class="metric-value-huge">97.2%</div>
+            <div class="metric-caption">Lecture attendance rate</div>
+          </div>
+
+          <div class="metric-card-ultra animate-entrance stagger-4">
+            <div class="metric-header">
+              <span class="editorial-tag" style="font-size:0.7rem;padding:3px 8px;color:#EC4899;border-color:rgba(236,72,153,0.2);">Cohort Rank</span>
+              <div class="metric-icon-box" style="background:rgba(236,72,153,0.1);color:#EC4899;"><i class="fas fa-ranking-star"></i></div>
+            </div>
+            <div class="metric-value-huge">#4</div>
+            <div class="metric-caption">Out of 128 cohort peers</div>
+          </div>
+        </div>
+
+        <!-- Grade Curve Canvas -->
+        <div class="ultra-card" style="margin-bottom:28px;">
+          <div class="ultra-card-header">
+            <div>
+              <h3 style="font-size:1.15rem;">Grade Trajectory & Confidence Interval</h3>
+              <p style="font-size:0.75rem;color:var(--color-text-secondary);margin-top:2px;">Performance progression across quarterly milestones</p>
+            </div>
+            <span class="editorial-tag" style="font-size:0.7rem;padding:3px 8px;">Quarter 3</span>
+          </div>
+          <div class="ultra-card-body">
+            <div style="height:280px;position:relative;">
+              <canvas id="perfTrendChart"></canvas>
+            </div>
+          </div>
+        </div>
+
+        <!-- Historical Assessment Table -->
+        <div class="ultra-card">
+          <div class="ultra-card-header">
+            <div>
+              <h3 style="font-size:1.15rem;">Official Assessment History</h3>
+              <p style="font-size:0.75rem;color:var(--color-text-secondary);margin-top:2px;">Examinations and proctored benchmark results</p>
+            </div>
+          </div>
+          <div class="ultra-card-body" style="padding:0;">
+            <div style="overflow-x:auto;">
+              <table style="width:100%;border-collapse:collapse;font-size:0.85rem;">
+                <thead>
+                  <tr style="border-bottom:1px solid var(--color-border);text-align:left;color:var(--color-text-muted);background:var(--color-bg);">
+                    <th style="padding:14px 20px;">Assessment Module</th>
+                    <th style="padding:14px 20px;">Score</th>
+                    <th style="padding:14px 20px;">Evaluation</th>
+                    <th style="padding:14px 20px;">Certified Date</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  ${tests.map(t => `
+                    <tr style="border-bottom:1px solid var(--color-border);">
+                      <td style="padding:14px 20px;font-weight:600;">${sanitize(t.title)}</td>
+                      <td style="padding:14px 20px;font-weight:700;color:#10B981;">${t.score}%</td>
+                      <td style="padding:14px 20px;">
+                        <span style="padding:3px 10px;border-radius:9999px;font-size:0.75rem;font-weight:700;background:rgba(16,185,129,0.12);color:#10B981;">
+                          ${t.grade}
+                        </span>
+                      </td>
+                      <td style="padding:14px 20px;color:var(--color-text-muted);">${t.date}</td>
+                    </tr>
+                  `).join('')}
+                </tbody>
+              </table>
+            </div>
+          </div>
+        </div>
+      `;
+
+      initPerfChart();
+    }
+
+    function initPerfChart() {
+      const isDark = Theme.isDark();
+      const textColor = isDark ? '#94A3B8' : '#475569';
+      const gridColor = isDark ? 'rgba(255,255,255,0.06)' : 'rgba(0,0,0,0.06)';
+
+      const ctx = document.getElementById('perfTrendChart');
+      if (ctx) {
+        new Chart(ctx, {
+          type: 'line',
+          data: {
+            labels: ['Quiz 1', 'Lab 1', 'Midterm', 'Assignment 3', 'Quiz 2', 'Capstone Demo'],
+            datasets: [{
+              label: 'Performance Score (%)',
+              data: [84, 89, 93, 88, 95, 96],
+              borderColor: '#10B981',
+              backgroundColor: 'rgba(16, 185, 129, 0.08)',
+              tension: 0.35,
+              fill: true,
+              pointBackgroundColor: '#10B981',
+              pointRadius: 5
+            }]
+          },
+          options: {
+            responsive: true,
+            maintainAspectRatio: false,
+            plugins: { legend: { display: false } },
+            scales: {
+              y: { max: 100, min: 70, grid: { color: gridColor }, ticks: { color: textColor } },
+              x: { grid: { display: false }, ticks: { color: textColor } }
+            }
+          }
+        });
+      }
+    }
+
+    renderPerformance();
+  </script>
+</body>
+</html>

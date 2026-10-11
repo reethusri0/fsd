@@ -1,0 +1,221 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Academic Forum & Discussions — LearnZone Ultra</title>
+  <link rel="stylesheet" href="styles.css" />
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css" />
+  <script>
+    (function(){
+      var t = localStorage.getItem('lzu_theme') || localStorage.getItem('lz_theme');
+      var dark = window.matchMedia && window.matchMedia('(prefers-color-scheme:dark)').matches;
+      if (t === 'dark' || (!t && dark)) document.documentElement.classList.add('dark');
+    })();
+  </script>
+</head>
+<body>
+
+  <div class="ultra-shell">
+    <aside class="ultra-sidebar" id="appSidebar"></aside>
+    <div class="ultra-workspace">
+      <header class="ultra-topbar" id="appTopbar"></header>
+      <main class="ultra-content" id="queriesMainContent"></main>
+    </div>
+  </div>
+
+  <div id="commandPaletteOverlay"></div>
+
+  <script src="utils.js"></script>
+  <script>
+    const session = requireAuth();
+    if (!session) throw new Error('Unauthenticated');
+
+    renderShell(session, 'queries.html');
+
+    let querySearch = '';
+
+    function renderQueries() {
+      let list = DB.getQueries();
+
+      if (querySearch) {
+        const q = querySearch.toLowerCase();
+        list = list.filter(item => item.title.toLowerCase().includes(q) || item.body.toLowerCase().includes(q) || (item.tag && item.tag.toLowerCase().includes(q)));
+      }
+
+      const mainEl = document.getElementById('queriesMainContent');
+      mainEl.innerHTML = `
+        <div style="display:grid;grid-template-columns:1fr 1.6fr;gap:28px;">
+          <!-- Left: Post Query Form -->
+          <div>
+            <div class="ultra-card animate-entrance stagger-1" style="position:sticky;top:96px;">
+              <div class="ultra-card-header">
+                <div>
+                  <h3 style="font-size:1.15rem;">Initiate Research Thread</h3>
+                  <p style="font-size:0.75rem;color:var(--color-text-secondary);margin-top:2px;">Post questions to student and faculty peers</p>
+                </div>
+              </div>
+              <div class="ultra-card-body">
+                <form id="ultraQueryPostForm" novalidate>
+                  <div class="ultra-form-group">
+                    <label class="ultra-label" for="qTitle">Thread Topic / Question *</label>
+                    <input type="text" id="qTitle" class="ultra-input" placeholder="e.g. KV-Cache Compression benchmarks" required />
+                    <div id="errQTitle" style="color:#EF4444;font-size:0.75rem;margin-top:4px;"></div>
+                  </div>
+
+                  <div class="ultra-form-group">
+                    <label class="ultra-label" for="qTag">Domain Specialty</label>
+                    <select id="qTag" class="ultra-input" style="cursor:pointer;">
+                      <option value="Machine Learning">Machine Learning</option>
+                      <option value="System Design">System Design</option>
+                      <option value="Web Architecture">Web Architecture</option>
+                      <option value="Databases">Databases</option>
+                      <option value="Algorithms">Algorithms</option>
+                      <option value="General Research">General Research</option>
+                    </select>
+                  </div>
+
+                  <div class="ultra-form-group">
+                    <label class="ultra-label" for="qBody">Technical Description *</label>
+                    <textarea id="qBody" class="ultra-input" style="height:120px;resize:vertical;" placeholder="Provide relevant context, error logs, or literature references..." required></textarea>
+                    <div id="errQBody" style="color:#EF4444;font-size:0.75rem;margin-top:4px;"></div>
+                  </div>
+
+                  <button type="submit" id="btnSubmitQuery" class="btn-ultra btn-ultra-primary btn-ultra-glow" style="width:100%;padding:13px;">
+                    <i class="fas fa-paper-plane"></i>
+                    <span>Publish Discussion</span>
+                  </button>
+                </form>
+              </div>
+            </div>
+          </div>
+
+          <!-- Right: Discussion Stream -->
+          <div>
+            <!-- Search Strip -->
+            <div class="ultra-card" style="padding:14px 20px;margin-bottom:20px;">
+              <div class="ultra-input-wrap">
+                <i class="fas fa-search prefix-icon"></i>
+                <input type="text" id="querySearchInput" class="ultra-input has-prefix" placeholder="Search discussion titles, concepts, tags..." value="${sanitize(querySearch)}" />
+              </div>
+            </div>
+
+            <!-- Feed -->
+            <div style="display:flex;flex-direction:column;gap:16px;">
+              ${list.length === 0 ? `
+                <div class="ultra-card" style="padding:48px;text-align:center;">
+                  <i class="fas fa-comments" style="font-size:2.5rem;color:var(--color-text-muted);margin-bottom:12px;"></i>
+                  <h3 style="font-size:1.2rem;margin-bottom:4px;">No discussions found</h3>
+                  <p style="color:var(--color-text-secondary);font-size:0.85rem;">Be the first to publish a technical research question!</p>
+                </div>
+              ` : list.map(q => {
+                const isAuthor = q.authorEmail === session.email;
+                return `
+                  <div class="ultra-card" style="padding:24px;">
+                    <div style="display:flex;align-items:flex-start;justify-content:space-between;gap:12px;margin-bottom:10px;">
+                      <div style="display:flex;align-items:center;gap:10px;">
+                        <span class="editorial-tag" style="font-size:0.7rem;padding:3px 8px;">${sanitize(q.tag || 'General')}</span>
+                        <span style="font-size:0.8rem;color:var(--color-text-muted);">
+                          <i class="fas fa-user-circle"></i> ${sanitize(q.authorName)}
+                        </span>
+                        <span style="font-size:0.75rem;color:var(--color-text-muted);">• ${relativeTime(q.createdAt)}</span>
+                      </div>
+                      ${isAuthor ? `
+                        <button class="btn-ultra btn-ultra-secondary" style="padding:4px 10px;font-size:0.75rem;color:#EF4444;" onclick="handleDeleteQuery('${q.id}')">
+                          <i class="fas fa-trash"></i> Delete
+                        </button>
+                      ` : ''}
+                    </div>
+
+                    <h3 style="font-size:1.15rem;font-weight:700;margin-bottom:8px;color:var(--color-text);">${sanitize(q.title)}</h3>
+                    <p style="color:var(--color-text-secondary);font-size:0.9rem;line-height:1.6;white-space:pre-wrap;">${sanitize(q.body)}</p>
+
+                    <div style="display:flex;align-items:center;gap:16px;margin-top:16px;padding-top:14px;border-top:1px solid var(--color-border-subtle);font-size:0.8rem;color:var(--color-text-muted);">
+                      <button style="background:none;border:none;color:inherit;cursor:pointer;display:flex;align-items:center;gap:6px;" onclick="Toast.info('Peer Vote', 'Recorded helpful rating for this thread.');">
+                        <i class="fas fa-thumbs-up"></i> Helpful
+                      </button>
+                      <span><i class="fas fa-shield-halved"></i> Verified Academic Post</span>
+                    </div>
+                  </div>
+                `;
+              }).join('')}
+            </div>
+          </div>
+        </div>
+      `;
+
+      // Hook Form & Search
+      const searchInput = document.getElementById('querySearchInput');
+      if (searchInput) {
+        searchInput.addEventListener('input', (e) => {
+          querySearch = e.target.value;
+          renderQueries();
+          const next = document.getElementById('querySearchInput');
+          if (next) {
+            next.focus();
+            next.setSelectionRange(next.value.length, next.value.length);
+          }
+        });
+      }
+
+      const form = document.getElementById('ultraQueryPostForm');
+      if (form) {
+        form.addEventListener('submit', async (e) => {
+          e.preventDefault();
+          document.getElementById('errQTitle').textContent = '';
+          document.getElementById('errQBody').textContent = '';
+
+          const title = document.getElementById('qTitle').value.trim();
+          const tag = document.getElementById('qTag').value;
+          const body = document.getElementById('qBody').value.trim();
+          let valid = true;
+
+          if (!title || title.length < 5) {
+            document.getElementById('errQTitle').textContent = 'Please provide a clear topic (at least 5 characters).';
+            valid = false;
+          }
+          if (!body || body.length < 10) {
+            document.getElementById('errQBody').textContent = 'Please describe the question in detail (at least 10 characters).';
+            valid = false;
+          }
+
+          if (!valid) return;
+
+          const btn = document.getElementById('btnSubmitQuery');
+          btn.disabled = true;
+          btn.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Publishing...';
+
+          await new Promise(r => setTimeout(r, 300));
+          DB.addQuery({
+            title,
+            body,
+            tag,
+            authorEmail: session.email,
+            authorName: `${session.firstName} ${session.lastName}`
+          });
+
+          Toast.success('Thread Published', 'Your research question has been posted to the cohort forum.');
+          renderQueries();
+        });
+      }
+    }
+
+    async function handleDeleteQuery(id) {
+      const ok = await confirmModal({
+        title: 'Delete Research Discussion',
+        body: 'Are you sure you want to permanently delete this discussion thread?',
+        confirmText: 'Delete Thread',
+        dangerMode: true
+      });
+
+      if (ok) {
+        DB.deleteQuery(id, session.email);
+        Toast.info('Thread Removed', 'Discussion item was successfully deleted.');
+        renderQueries();
+      }
+    }
+
+    renderQueries();
+  </script>
+</body>
+</html>

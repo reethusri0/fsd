@@ -1,0 +1,252 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>LearnZone Ultra — Intelligent Academic Workspace</title>
+  <link rel="stylesheet" href="styles.css" />
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css" />
+  <script>
+    (function(){
+      var t = localStorage.getItem('lzu_theme') || localStorage.getItem('lz_theme');
+      var dark = window.matchMedia && window.matchMedia('(prefers-color-scheme:dark)').matches;
+      if (t === 'dark' || (!t && dark)) document.documentElement.classList.add('dark');
+    })();
+  </script>
+  <style>
+    .hero-section {
+      min-height: 90vh;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      padding: 80px 24px;
+      position: relative;
+      text-align: center;
+    }
+    .hero-glow-sphere {
+      position: absolute;
+      top: 15%;
+      left: 50%;
+      transform: translateX(-50%);
+      width: 600px;
+      height: 400px;
+      background: radial-gradient(ellipse, rgba(99, 102, 241, 0.25) 0%, rgba(236, 72, 153, 0.1) 40%, transparent 70%);
+      filter: blur(60px);
+      z-index: 0;
+      pointer-events: none;
+    }
+    .hero-content {
+      max-width: 900px;
+      position: relative;
+      z-index: 1;
+    }
+    .workspace-preview-frame {
+      margin-top: 56px;
+      border-radius: var(--radius-xl);
+      border: 1px solid var(--color-border);
+      background: var(--color-surface-card);
+      backdrop-filter: blur(20px);
+      box-shadow: var(--shadow-elevated), var(--shadow-glow);
+      overflow: hidden;
+      animation: ultraFloat 6s ease-in-out infinite;
+    }
+    .preview-header {
+      padding: 14px 20px;
+      background: rgba(15, 23, 42, 0.05);
+      border-bottom: 1px solid var(--color-border);
+      display: flex;
+      align-items: center;
+      gap: 8px;
+    }
+    .window-dot {
+      width: 11px;
+      height: 11px;
+      border-radius: 50%;
+    }
+    .dot-red { background: #EF4444; }
+    .dot-yellow { background: #F59E0B; }
+    .dot-green { background: #10B981; }
+    .preview-grid {
+      display: grid;
+      grid-template-columns: 240px 1fr;
+      min-height: 380px;
+      text-align: left;
+    }
+    .preview-sidebar {
+      background: var(--color-sidebar-bg);
+      padding: 20px 16px;
+      color: #94A3B8;
+      font-size: 0.85rem;
+    }
+    .preview-main {
+      padding: 24px;
+      background: var(--color-bg);
+    }
+    .feature-card-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+      gap: 24px;
+      margin-top: 48px;
+    }
+    @media (max-width: 768px) {
+      .preview-grid { grid-template-columns: 1fr; }
+      .preview-sidebar { display: none; }
+    }
+  </style>
+</head>
+<body>
+
+  <!-- Navigation Bar -->
+  <header style="height:var(--topbar-height);padding:0 32px;display:flex;align-items:center;justify-content:space-between;border-bottom:1px solid var(--color-border);background:rgba(255,255,255,0.7);backdrop-filter:blur(12px);position:sticky;top:0;z-index:50;">
+    <a href="index.html" class="ultra-brand">
+      <div class="brand-icon-wrap">
+        <i class="fas fa-cube" style="color:#FFF;"></i>
+      </div>
+      <div>
+        <span class="brand-text">LearnZone</span>
+        <span class="brand-badge">ULTRA</span>
+      </div>
+    </a>
+
+    <div style="display:flex;align-items:center;gap:16px;">
+      <button class="action-icon-btn" id="landingThemeBtn" aria-label="Toggle theme">
+        <i class="fas fa-moon"></i>
+      </button>
+      <a href="login.html" class="btn-ultra btn-ultra-secondary" style="padding:8px 18px;font-size:0.85rem;">Sign In</a>
+      <a href="register.html" class="btn-ultra btn-ultra-primary btn-ultra-glow" style="padding:8px 20px;font-size:0.85rem;">Get Started Free</a>
+    </div>
+  </header>
+
+  <!-- Hero Section -->
+  <section class="hero-section">
+    <div class="hero-glow-sphere"></div>
+    <div class="hero-content">
+      <div class="editorial-tag animate-entrance stagger-1">
+        <i class="fas fa-sparkles"></i> Next-Gen Student Operating System
+      </div>
+
+      <h1 class="hero-headline animate-entrance stagger-2" style="margin:20px 0 16px;">
+        Architected for <span class="text-gradient">Academic Mastery</span>
+      </h1>
+
+      <p style="font-size:1.2rem;color:var(--color-text-secondary);max-width:720px;margin:0 auto 36px;line-height:1.6;" class="animate-entrance stagger-3">
+        Experience a luminous digital environment that combines intelligent learning telemetry, zero-friction coursework pipelines, and peer research discussions.
+      </p>
+
+      <div style="display:flex;align-items:center;justify-content:center;gap:16px;flex-wrap:wrap;" class="animate-entrance stagger-4">
+        <a href="register.html" class="btn-ultra btn-ultra-primary btn-ultra-glow" style="padding:14px 32px;font-size:1.05rem;">
+          <i class="fas fa-bolt"></i> Launch Workspace
+        </a>
+        <a href="login.html" class="btn-ultra btn-ultra-secondary" style="padding:14px 28px;font-size:1.05rem;">
+          <i class="fas fa-arrow-right-to-bracket"></i> Student Login
+        </a>
+      </div>
+
+      <!-- Live Interactive Interface Teaser -->
+      <div class="workspace-preview-frame animate-entrance stagger-5">
+        <div class="preview-header">
+          <div class="window-dot dot-red"></div>
+          <div class="window-dot dot-yellow"></div>
+          <div class="window-dot dot-green"></div>
+          <span style="font-family:var(--font-mono);font-size:0.75rem;color:var(--color-text-muted);margin-left:12px;">learnzone-ultra-workspace // session:active</span>
+        </div>
+        <div class="preview-grid">
+          <div class="preview-sidebar">
+            <div style="color:#FFF;font-weight:700;margin-bottom:16px;display:flex;align-items:center;gap:8px;">
+              <i class="fas fa-cube" style="color:var(--color-primary);"></i> LearnZone Hub
+            </div>
+            <div style="display:flex;flex-direction:column;gap:8px;">
+              <div style="padding:8px 12px;border-radius:8px;background:rgba(99,102,241,0.2);color:#FFF;"><i class="fas fa-compass"></i> Overview</div>
+              <div style="padding:8px 12px;border-radius:8px;"><i class="fas fa-chart-pie"></i> Dashboard</div>
+              <div style="padding:8px 12px;border-radius:8px;"><i class="fas fa-tasks"></i> Deliverables</div>
+              <div style="padding:8px 12px;border-radius:8px;"><i class="fas fa-comments"></i> Discussions</div>
+            </div>
+          </div>
+          <div class="preview-main">
+            <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:20px;">
+              <div>
+                <h3 style="font-size:1.15rem;font-weight:700;">Machine Learning & Systems Sprint</h3>
+                <p style="font-size:0.8rem;color:var(--color-text-secondary);">4 active modules • 91.4% current semester mastery</p>
+              </div>
+              <span class="editorial-tag" style="padding:4px 10px;font-size:0.7rem;">Term 2026.2</span>
+            </div>
+            <div style="display:grid;grid-template-columns:1fr 1fr;gap:16px;">
+              <div style="background:var(--color-surface);padding:16px;border-radius:12px;border:1px solid var(--color-border);">
+                <div style="font-size:0.75rem;color:var(--color-text-muted);text-transform:uppercase;">Next Deliverable</div>
+                <div style="font-weight:700;margin:6px 0;">PyTorch Neural Benchmarks</div>
+                <div style="font-size:0.8rem;color:#EF4444;"><i class="fas fa-clock"></i> Due in 3 days</div>
+              </div>
+              <div style="background:var(--color-surface);padding:16px;border-radius:12px;border:1px solid var(--color-border);">
+                <div style="font-size:0.75rem;color:var(--color-text-muted);text-transform:uppercase;">Academic Index</div>
+                <div style="font-weight:700;margin:6px 0;font-size:1.4rem;color:#10B981;">3.92 GPA</div>
+                <div style="font-size:0.8rem;color:var(--color-text-muted);">Top 5% Cohort Ranking</div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- Feature Showcase -->
+  <section style="padding:80px 32px;max-width:var(--container-max);margin:0 auto;">
+    <div style="text-align:center;max-width:680px;margin:0 auto;">
+      <h2 style="font-size:2.25rem;font-weight:800;">Engineering Every Dimension of Learning</h2>
+      <p style="color:var(--color-text-secondary);margin-top:12px;">Engineered with tactile micro-interactions, responsive telemetry, and real-time deadline monitoring.</p>
+    </div>
+
+    <div class="feature-card-grid">
+      <div class="ultra-card">
+        <div class="ultra-card-body">
+          <div class="metric-icon-box" style="background:rgba(99,102,241,0.1);color:var(--color-primary);margin-bottom:18px;">
+            <i class="fas fa-chart-line"></i>
+          </div>
+          <h3 style="font-size:1.2rem;margin-bottom:8px;">Deep Academic Telemetry</h3>
+          <p style="color:var(--color-text-secondary);font-size:0.9rem;">Multi-axis trend curves visualize grade shifts, assessment distributions, and weekly momentum.</p>
+        </div>
+      </div>
+
+      <div class="ultra-card">
+        <div class="ultra-card-body">
+          <div class="metric-icon-box" style="background:rgba(245,158,11,0.1);color:#F59E0B;margin-bottom:18px;">
+            <i class="fas fa-tasks"></i>
+          </div>
+          <h3 style="font-size:1.2rem;margin-bottom:8px;">Coursework Pipeline</h3>
+          <p style="color:var(--color-text-secondary);font-size:0.9rem;">Instant assignment filtering, status updates with modal verification, and urgent deadline flags.</p>
+        </div>
+      </div>
+
+      <div class="ultra-card">
+        <div class="ultra-card-body">
+          <div class="metric-icon-box" style="background:rgba(16,185,129,0.1);color:#10B981;margin-bottom:18px;">
+            <i class="fas fa-terminal"></i>
+          </div>
+          <h3 style="font-size:1.2rem;margin-bottom:8px;">Command Navigation</h3>
+          <p style="color:var(--color-text-secondary);font-size:0.9rem;">Press ⌘K or Ctrl+K anywhere to jump across routes, filter materials, or access platform settings.</p>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- Editorial Footer -->
+  <footer style="padding:48px 32px;border-top:1px solid var(--color-border);text-align:center;font-size:0.85rem;color:var(--color-text-muted);">
+    <div style="margin-bottom:16px;">
+      <span class="brand-text" style="color:var(--color-text);">LearnZone Ultra</span> — Commercial EdTech Prototype 2026
+    </div>
+    <p>Client-side persistence powered by structured localStorage and sessionStorage engines.</p>
+  </footer>
+
+  <script src="utils.js"></script>
+  <script>
+    if (DB.getSession()) {
+      window.location.href = 'home.html';
+    }
+
+    const tBtn = document.getElementById('landingThemeBtn');
+    tBtn.addEventListener('click', () => {
+      Theme.toggle();
+      tBtn.querySelector('i').className = `fas ${Theme.isDark() ? 'fa-sun' : 'fa-moon'}`;
+    });
+  </script>
+</body>
+</html>

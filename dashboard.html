@@ -1,0 +1,233 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Intelligence Dashboard — LearnZone Ultra</title>
+  <link rel="stylesheet" href="styles.css" />
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css" />
+  <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js"></script>
+  <script>
+    (function(){
+      var t = localStorage.getItem('lzu_theme') || localStorage.getItem('lz_theme');
+      var dark = window.matchMedia && window.matchMedia('(prefers-color-scheme:dark)').matches;
+      if (t === 'dark' || (!t && dark)) document.documentElement.classList.add('dark');
+    })();
+  </script>
+</head>
+<body>
+
+  <div class="ultra-shell">
+    <aside class="ultra-sidebar" id="appSidebar"></aside>
+    <div class="ultra-workspace">
+      <header class="ultra-topbar" id="appTopbar"></header>
+      <main class="ultra-content" id="dashboardMainContent"></main>
+    </div>
+  </div>
+
+  <div id="commandPaletteOverlay"></div>
+
+  <script src="utils.js"></script>
+  <script>
+    const session = requireAuth();
+    if (!session) throw new Error('Unauthenticated');
+
+    renderShell(session, 'dashboard.html');
+
+    function renderDashboard() {
+      const assignments = DB.getAssignments(session.email);
+      const pending = assignments.filter(a => a.status === 'pending');
+      const submitted = assignments.filter(a => a.status === 'submitted');
+      const overdue = assignments.filter(a => a.status === 'overdue' || (a.status === 'pending' && daysFromToday(a.dueDate) < 0));
+
+      const mainEl = document.getElementById('dashboardMainContent');
+      mainEl.innerHTML = `
+        <!-- KPI Strip -->
+        <div style="display:grid;grid-template-columns:repeat(auto-fit, minmax(220px, 1fr));gap:20px;margin-bottom:28px;">
+          <div class="metric-card-ultra animate-entrance stagger-1">
+            <div class="metric-header">
+              <span class="editorial-tag" style="font-size:0.7rem;padding:3px 8px;">Efficiency Index</span>
+              <div class="metric-icon-box" style="background:rgba(99,102,241,0.1);color:var(--color-primary);"><i class="fas fa-gauge-high"></i></div>
+            </div>
+            <div class="metric-value-huge">94.8%</div>
+            <div class="metric-caption">On-time delivery average</div>
+          </div>
+
+          <div class="metric-card-ultra animate-entrance stagger-2">
+            <div class="metric-header">
+              <span class="editorial-tag" style="font-size:0.7rem;padding:3px 8px;color:#10B981;border-color:rgba(16,185,129,0.2);">Submitted</span>
+              <div class="metric-icon-box" style="background:rgba(16,185,129,0.1);color:#10B981;"><i class="fas fa-circle-check"></i></div>
+            </div>
+            <div class="metric-value-huge">${submitted.length}</div>
+            <div class="metric-caption">Verified milestones</div>
+          </div>
+
+          <div class="metric-card-ultra animate-entrance stagger-3">
+            <div class="metric-header">
+              <span class="editorial-tag" style="font-size:0.7rem;padding:3px 8px;color:#F59E0B;border-color:rgba(245,158,11,0.2);">Pending</span>
+              <div class="metric-icon-box" style="background:rgba(245,158,11,0.1);color:#F59E0B;"><i class="fas fa-clock"></i></div>
+            </div>
+            <div class="metric-value-huge">${pending.length}</div>
+            <div class="metric-caption">Active queue</div>
+          </div>
+
+          <div class="metric-card-ultra animate-entrance stagger-4">
+            <div class="metric-header">
+              <span class="editorial-tag" style="font-size:0.7rem;padding:3px 8px;color:${overdue.length > 0 ? '#EF4444' : '#10B981'};border-color:${overdue.length > 0 ? 'rgba(239,68,68,0.2)' : 'rgba(16,185,129,0.2)'};">Overdue</span>
+              <div class="metric-icon-box" style="background:${overdue.length > 0 ? 'rgba(239,68,68,0.1)' : 'rgba(16,185,129,0.1)'};color:${overdue.length > 0 ? '#EF4444' : '#10B981'};"><i class="fas fa-triangle-exclamation"></i></div>
+            </div>
+            <div class="metric-value-huge" style="color:${overdue.length > 0 ? '#EF4444' : 'var(--color-text)'}">${overdue.length}</div>
+            <div class="metric-caption">Requiring late pass</div>
+          </div>
+        </div>
+
+        <!-- Telemetry Visualizations -->
+        <div style="display:grid;grid-template-columns:1.6fr 1fr;gap:28px;margin-bottom:28px;">
+          <div class="ultra-card">
+            <div class="ultra-card-header">
+              <div>
+                <h3 style="font-size:1.15rem;">Mastery Progression & Velocity</h3>
+                <p style="font-size:0.75rem;color:var(--color-text-secondary);margin-top:2px;">Weekly progression indices over current semester</p>
+              </div>
+              <span class="editorial-tag" style="font-size:0.7rem;padding:3px 8px;">Live Telemetry</span>
+            </div>
+            <div class="ultra-card-body">
+              <div style="height:280px;position:relative;">
+                <canvas id="velocityChart"></canvas>
+              </div>
+            </div>
+          </div>
+
+          <div class="ultra-card">
+            <div class="ultra-card-header">
+              <div>
+                <h3 style="font-size:1.15rem;">Subject Proficiency Radar</h3>
+                <p style="font-size:0.75rem;color:var(--color-text-secondary);margin-top:2px;">Benchmark across domain specialties</p>
+              </div>
+            </div>
+            <div class="ultra-card-body">
+              <div style="height:280px;position:relative;">
+                <canvas id="domainChart"></canvas>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <!-- Assignment Breakdown & Schedule -->
+        <div class="ultra-card">
+          <div class="ultra-card-header">
+            <div>
+              <h3 style="font-size:1.15rem;">Deliverable Telemetry Breakdown</h3>
+              <p style="font-size:0.75rem;color:var(--color-text-secondary);margin-top:2px;">Status tracking of coursework modules</p>
+            </div>
+            <a href="assignments.html" class="btn-ultra btn-ultra-secondary" style="padding:6px 14px;font-size:0.8rem;">Open Assignments</a>
+          </div>
+          <div class="ultra-card-body" style="padding:0;">
+            <div style="overflow-x:auto;">
+              <table style="width:100%;border-collapse:collapse;font-size:0.85rem;">
+                <thead>
+                  <tr style="border-bottom:1px solid var(--color-border);text-align:left;color:var(--color-text-muted);background:var(--color-bg);">
+                    <th style="padding:14px 20px;">Deliverable</th>
+                    <th style="padding:14px 20px;">Subject</th>
+                    <th style="padding:14px 20px;">Timeline</th>
+                    <th style="padding:14px 20px;">Status</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  ${assignments.map(a => {
+                    const isSubmitted = a.status === 'submitted';
+                    const isOverdue = a.status === 'overdue' || (a.status === 'pending' && daysFromToday(a.dueDate) < 0);
+                    const badgeColor = isSubmitted ? '#10B981' : isOverdue ? '#EF4444' : '#F59E0B';
+                    return `
+                      <tr style="border-bottom:1px solid var(--color-border);">
+                        <td style="padding:14px 20px;font-weight:600;">${sanitize(a.title)}</td>
+                        <td style="padding:14px 20px;color:var(--color-text-secondary);">${sanitize(a.subject)}</td>
+                        <td style="padding:14px 20px;color:${isOverdue ? '#EF4444' : 'var(--color-text-muted)'};">${dueLabel(a.dueDate)}</td>
+                        <td style="padding:14px 20px;">
+                          <span style="display:inline-flex;align-items:center;gap:6px;padding:3px 10px;border-radius:9999px;font-size:0.75rem;font-weight:700;background:${badgeColor}18;color:${badgeColor};">
+                            <span style="width:6px;height:6px;border-radius:50%;background:${badgeColor};"></span>
+                            ${a.status.toUpperCase()}
+                          </span>
+                        </td>
+                      </tr>
+                    `;
+                  }).join('')}
+                </tbody>
+              </table>
+            </div>
+          </div>
+        </div>
+      `;
+
+      initCharts();
+    }
+
+    function initCharts() {
+      const isDark = Theme.isDark();
+      const textColor = isDark ? '#94A3B8' : '#475569';
+      const gridColor = isDark ? 'rgba(255,255,255,0.06)' : 'rgba(0,0,0,0.06)';
+
+      const ctxV = document.getElementById('velocityChart');
+      if (ctxV) {
+        new Chart(ctxV, {
+          type: 'line',
+          data: {
+            labels: ['Week 1', 'Week 2', 'Week 3', 'Week 4', 'Week 5', 'Week 6'],
+            datasets: [{
+              label: 'Knowledge Retention Index',
+              data: [64, 72, 79, 85, 91, 96],
+              borderColor: '#6366F1',
+              backgroundColor: 'rgba(99, 102, 241, 0.1)',
+              tension: 0.4,
+              fill: true,
+              pointBackgroundColor: '#6366F1',
+              pointRadius: 4
+            }]
+          },
+          options: {
+            responsive: true,
+            maintainAspectRatio: false,
+            plugins: { legend: { display: false } },
+            scales: {
+              y: { max: 100, min: 50, grid: { color: gridColor }, ticks: { color: textColor } },
+              x: { grid: { display: false }, ticks: { color: textColor } }
+            }
+          }
+        });
+      }
+
+      const ctxD = document.getElementById('domainChart');
+      if (ctxD) {
+        new Chart(ctxD, {
+          type: 'bar',
+          data: {
+            labels: ['ML Systems', 'Algorithms', 'Databases', 'Cloud Arc', 'UI Design'],
+            datasets: [{
+              data: [94, 88, 92, 84, 96],
+              backgroundColor: [
+                '#6366F1',
+                '#8B5CF6',
+                '#EC4899',
+                '#F59E0B',
+                '#10B981'
+              ],
+              borderRadius: 8
+            }]
+          },
+          options: {
+            responsive: true,
+            maintainAspectRatio: false,
+            plugins: { legend: { display: false } },
+            scales: {
+              y: { max: 100, min: 60, grid: { color: gridColor }, ticks: { color: textColor } },
+              x: { grid: { display: false }, ticks: { color: textColor } }
+            }
+          }
+        });
+      }
+    }
+
+    renderDashboard();
+  </script>
+</body>
+</html>

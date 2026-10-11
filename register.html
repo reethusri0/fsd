@@ -1,0 +1,183 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Student Enrollment — LearnZone Ultra</title>
+  <link rel="stylesheet" href="styles.css" />
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css" />
+  <script>
+    (function(){
+      var t = localStorage.getItem('lzu_theme') || localStorage.getItem('lz_theme');
+      var dark = window.matchMedia && window.matchMedia('(prefers-color-scheme:dark)').matches;
+      if (t === 'dark' || (!t && dark)) document.documentElement.classList.add('dark');
+    })();
+  </script>
+</head>
+<body style="padding:48px 16px;background:var(--color-bg);">
+
+  <div style="max-width:620px;margin:0 auto;" class="animate-entrance">
+    <div style="text-align:center;margin-bottom:32px;">
+      <a href="index.html" class="ultra-brand" style="justify-content:center;margin-bottom:16px;">
+        <div class="brand-icon-wrap">
+          <i class="fas fa-cube" style="color:#FFF;"></i>
+        </div>
+        <div>
+          <span class="brand-text">LearnZone</span>
+          <span class="brand-badge">ULTRA</span>
+        </div>
+      </a>
+      <h1 style="font-size:2rem;margin-bottom:8px;">Create Academic Account</h1>
+      <p style="color:var(--color-text-secondary);font-size:0.95rem;">Join the university research cohort and workspace pipeline.</p>
+    </div>
+
+    <div class="ultra-card" style="padding:36px;">
+      <form id="ultraRegisterForm" novalidate>
+        <!-- Name Row -->
+        <div style="display:grid;grid-template-columns:1fr 1fr;gap:16px;">
+          <div class="ultra-form-group">
+            <label class="ultra-label" for="regFirstName">First Name *</label>
+            <input type="text" id="regFirstName" class="ultra-input" placeholder="Eleanor" required />
+            <div id="errFirstName" style="color:#EF4444;font-size:0.75rem;margin-top:4px;"></div>
+          </div>
+          <div class="ultra-form-group">
+            <label class="ultra-label" for="regLastName">Last Name *</label>
+            <input type="text" id="regLastName" class="ultra-input" placeholder="Vance" required />
+            <div id="errLastName" style="color:#EF4444;font-size:0.75rem;margin-top:4px;"></div>
+          </div>
+        </div>
+
+        <!-- Age & DOB -->
+        <div style="display:grid;grid-template-columns:1fr 1fr;gap:16px;">
+          <div class="ultra-form-group">
+            <label class="ultra-label" for="regAge">Age *</label>
+            <input type="number" id="regAge" class="ultra-input" placeholder="21" min="12" max="100" required />
+            <div id="errAge" style="color:#EF4444;font-size:0.75rem;margin-top:4px;"></div>
+          </div>
+          <div class="ultra-form-group">
+            <label class="ultra-label" for="regDob">Date of Birth *</label>
+            <input type="date" id="regDob" class="ultra-input" required />
+            <div id="errDob" style="color:#EF4444;font-size:0.75rem;margin-top:4px;"></div>
+          </div>
+        </div>
+
+        <!-- Email -->
+        <div class="ultra-form-group">
+          <label class="ultra-label" for="regEmail">Academic Email *</label>
+          <div class="ultra-input-wrap">
+            <i class="fas fa-envelope prefix-icon"></i>
+            <input type="email" id="regEmail" class="ultra-input has-prefix" placeholder="student@mit.edu" required />
+          </div>
+          <div id="errEmail" style="color:#EF4444;font-size:0.75rem;margin-top:4px;"></div>
+        </div>
+
+        <!-- Phone -->
+        <div class="ultra-form-group">
+          <label class="ultra-label" for="regPhone">Contact Phone Number *</label>
+          <div class="ultra-input-wrap">
+            <i class="fas fa-phone prefix-icon"></i>
+            <input type="tel" id="regPhone" class="ultra-input has-prefix" placeholder="9876543210 (10 digits)" required />
+          </div>
+          <div id="errPhone" style="color:#EF4444;font-size:0.75rem;margin-top:4px;"></div>
+        </div>
+
+        <!-- Password Row -->
+        <div style="display:grid;grid-template-columns:1fr 1fr;gap:16px;">
+          <div class="ultra-form-group">
+            <label class="ultra-label" for="regPassword">Password *</label>
+            <input type="password" id="regPassword" class="ultra-input" placeholder="Minimum 6 characters" required />
+            <div id="errPassword" style="color:#EF4444;font-size:0.75rem;margin-top:4px;"></div>
+          </div>
+          <div class="ultra-form-group">
+            <label class="ultra-label" for="regConfirmPassword">Confirm Password *</label>
+            <input type="password" id="regConfirmPassword" class="ultra-input" placeholder="Repeat password" required />
+            <div id="errConfirm" style="color:#EF4444;font-size:0.75rem;margin-top:4px;"></div>
+          </div>
+        </div>
+
+        <!-- Terms Agreement -->
+        <div style="margin-bottom:24px;display:flex;align-items:flex-start;gap:10px;">
+          <input type="checkbox" id="regTerms" style="margin-top:4px;accent-color:var(--color-primary);" required />
+          <label for="regTerms" style="font-size:0.85rem;color:var(--color-text-secondary);cursor:pointer;">
+            I acknowledge the academic integrity guidelines and terms of research privacy on LearnZone.
+          </label>
+        </div>
+        <div id="errTerms" style="color:#EF4444;font-size:0.75rem;margin-top:-16px;margin-bottom:20px;"></div>
+
+        <button type="submit" id="btnRegisterSubmit" class="btn-ultra btn-ultra-primary btn-ultra-glow" style="width:100%;padding:14px;">
+          <i class="fas fa-sparkles"></i>
+          <span>Initialize Student Profile</span>
+        </button>
+      </form>
+
+      <div style="margin-top:24px;text-align:center;font-size:0.85rem;color:var(--color-text-secondary);">
+        Already hold credentials?
+        <a href="login.html" style="color:var(--color-primary);font-weight:600;margin-left:4px;">Log in here</a>
+      </div>
+    </div>
+  </div>
+
+  <script src="utils.js"></script>
+  <script>
+    redirectIfAuthed();
+
+    const form = document.getElementById('ultraRegisterForm');
+
+    form.addEventListener('submit', async (e) => {
+      e.preventDefault();
+
+      // Clear errors
+      ['errFirstName', 'errLastName', 'errAge', 'errDob', 'errEmail', 'errPhone', 'errPassword', 'errConfirm', 'errTerms'].forEach(id => {
+        document.getElementById(id).textContent = '';
+      });
+
+      const firstName = document.getElementById('regFirstName').value.trim();
+      const lastName = document.getElementById('regLastName').value.trim();
+      const age = document.getElementById('regAge').value;
+      const dob = document.getElementById('regDob').value;
+      const email = document.getElementById('regEmail').value.trim();
+      const phone = document.getElementById('regPhone').value.trim();
+      const password = document.getElementById('regPassword').value;
+      const confirmPwd = document.getElementById('regConfirmPassword').value;
+      const terms = document.getElementById('regTerms').checked;
+
+      let valid = true;
+
+      if (!firstName) { document.getElementById('errFirstName').textContent = 'First name is required'; valid = false; }
+      if (!lastName) { document.getElementById('errLastName').textContent = 'Last name is required'; valid = false; }
+      if (!age || parseInt(age) < 12) { document.getElementById('errAge').textContent = 'Valid academic age required (12+)'; valid = false; }
+      if (!dob) { document.getElementById('errDob').textContent = 'Date of birth required'; valid = false; }
+      if (!email || !isValidEmail(email)) { document.getElementById('errEmail').textContent = 'Valid academic email required'; valid = false; }
+      if (!phone || !isValidPhone(phone)) { document.getElementById('errPhone').textContent = 'Valid 10-digit mobile required (starts with 6-9)'; valid = false; }
+      if (!password || password.length < 6) { document.getElementById('errPassword').textContent = 'Password must be at least 6 characters'; valid = false; }
+      if (password !== confirmPwd) { document.getElementById('errConfirm').textContent = 'Passwords do not match'; valid = false; }
+      if (!terms) { document.getElementById('errTerms').textContent = 'Please accept the integrity terms'; valid = false; }
+
+      if (!valid) return;
+
+      const btn = document.getElementById('btnRegisterSubmit');
+      btn.disabled = true;
+      btn.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Enrolling...';
+
+      await new Promise(r => setTimeout(r, 450));
+      const res = DB.registerUser({ firstName, lastName, age, dob, email, phone, password });
+
+      if (!res.ok) {
+        btn.disabled = false;
+        btn.innerHTML = '<i class="fas fa-sparkles"></i> <span>Initialize Student Profile</span>';
+        if (res.error === 'email') document.getElementById('errEmail').textContent = res.msg;
+        Toast.error('Enrollment Error', res.msg);
+        return;
+      }
+
+      // Auto-login upon registration
+      const login = DB.loginUser(email, password);
+      if (login.ok) {
+        DB.setSession(login.user);
+        Toast.success('Profile Created', `Welcome to the cohort, ${firstName}!`);
+        setTimeout(() => { window.location.href = 'home.html'; }, 300);
+      }
+    });
+  </script>
+</body>
+</html>
